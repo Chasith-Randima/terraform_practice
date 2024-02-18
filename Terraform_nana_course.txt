@@ -1,0 +1,3855 @@
+main.tf
+
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+to execute the terraform commands
+
+terraform init
+
+if we have multiple providers like aws and azure we could do below thing to add them all
+
+
+main.tf
+
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "4.3.0"
+    }
+  }
+}
+
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+good practice to create separate file for providers
+
+providers.tf
+
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "4.3.0"
+    }
+    linode = {
+      source = "linode/linode"
+      version = "1.25.2"
+    }
+  }
+}
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+
+When crating recoursed
+
+name_of_the_service__recourse_name
+
+ex- aws_vpc , aws_ec2 , aws_s3
+
+
+then the whatenver we want to call that recourse
+
+"aws-vpc""development-vpc"
+
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = "10.0.10.0/24"
+    availability_zon = "eu-west-3a"
+}
+
+
+
+
+to create recources we added to the main.tf
+
+terraform apply
+
+
+===========
+data sources - creating sub feature for existing resources
+
+===========
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = "10.0.10.0/24"
+    availability_zon = "eu-west-3a"
+}
+
+
+data "aws_vpc" "existing_vpc"{
+    default = true
+}
+
+resource "aws_subnet" "dev-subnet-2" {
+    vpc_id = data.aws_vpc.existing_vpc.id
+    cidr_block = "172.31.48.0/20"
+    availability_zone = "eu-west-3a"
+
+}
+
+
+
+recap of above
+
+provider = like import library
+
+resource/data = like function call from the imported library
+
+arguments = like parameters of function
+
+
+
+====
+
+tags
+
+===
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = "10.0.10.0/24"
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        vpc_env:"dev"
+    }
+}
+
+
+data "aws_vpc" "existing_vpc"{
+    default = true
+}
+
+resource "aws_subnet" "dev-subnet-2" {
+    vpc_id = data.aws_vpc.existing_vpc.id
+    cidr_block = "172.31.48.0/20"
+    availability_zone = "eu-west-3a"
+    tags = {
+        Name:"subnet-2-default"
+    }
+
+}
+
+Green + means we are creating something new
+yellowish `(tilda) mean we are editing something already there
+
+
+
+deleting something
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = "10.0.10.0/24"
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+data "aws_vpc" "existing_vpc"{
+    default = true
+}
+
+resource "aws_subnet" "dev-subnet-2" {
+    vpc_id = data.aws_vpc.existing_vpc.id
+    cidr_block = "172.31.48.0/20"
+    availability_zone = "eu-west-3a"
+    tags = {
+        Name:"subnet-2-default"
+    }
+
+}
+
+
+red minus sign shows and removes it
+
+
+
+========
+removing entire recources from the aws
+
+========
+
+we could remove recourse text from the main.tf file and run terraform apply.
+it will compare the privious state with current state and delete those recources
+
+
+
+other way is using terraform commands
+
+target name is recource_type.name_we_gave_to_the_recource
+
+terraform destroy -target aws_subnet.dev_subnet-2
+
+
+
+
+
+
+========
+More terraform commands
+========
+
+
+to run command right away without terraform waiting to check everything
+
+terraform apply -auto-approve
+
+
+to destroy everything we created using the terraform file
+
+terraform destroy
+
+other commands
+
+below command shows all the sub commands availabel
+
+terraform state
+
+
+to list all the recources
+
+terraform state list
+
+to see specific recours
+
+terraform state show aws_subnet.dev-subnet-1
+
+
+to see available attributes
+
+terraform plan
+
+
+
+
+====
+Output
+====
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = "10.0.10.0/24"
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+====
+Input Variables
+====
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "subnet_cidr_block" {
+    description = "subnet cidr block"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = "10.0.0.0/16"
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+Three ways to assign value to a variable
+
+1.when we run the terraform apply command
+
+terraform apply
+
+then enter the value
+
+2.along with the terraform command
+
+terraform apply "variable_name_we_created=value_for_the_variable"
+
+terraform apply -var "subnet_cidr_block=10.0.30.0/24"
+
+
+3.creating a variable file
+
+naming convention for variable file is
+
+terraform.tfvars
+
+variable_name = value_for_the_variable
+
+terraform.tfvars
+
+subnet_cidr_block = "10.0.40.0/24"
+
+
+then run
+
+terraform apply
+
+adding variable for vpc as well
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "subnet_cidr_block" {
+    description = "subnet cidr block"
+}
+
+variable "subnet_cidr_block" {
+    description = "vpc cidr block"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.subnet_cidr_block
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+subnet_cidr_block = "10.0.40.0/24"
+vpc_cidr_block = "10.0.0.0/16
+
+
+
+
+Input variables use cases
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "subnet_cidr_block" {
+    description = "subnet cidr block"
+}
+
+variable "subnet_cidr_block" {
+    description = "vpc cidr block"
+}
+
+variable "environment" {
+    description = "deployment environment"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.subnet_cidr_block
+    tags = {
+        Name:var.environment
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+subnet_cidr_block = "10.0.40.0/24"
+vpc_cidr_block = "10.0.0.0/16
+environemnt = "development"
+
+
+Three environment variables files for same main.tf file
+
+for dev
+
+terraform-dev.tfvars
+
+for staging
+
+terraform-staging.tfvars
+
+for produ
+
+terraform-production.tfvars
+
+when there are multiple variable files we need to pass the file name along with the command
+
+terraform apply -var-file terraform-dev.tfvars
+
+
+
+
+DEFAULT VALUES
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "subnet_cidr_block" {
+    description = "subnet cidr block"
+    default = "10.0.10.0/24"
+}
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.subnet_cidr_block
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+subnet_cidr_block = "10.0.40.0/24"
+vpc_cidr_block = "10.0.0.0/16
+
+
+
+TYPE CONSTRAINE
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "subnet_cidr_block" {
+    description = "subnet cidr block"
+    default = "10.0.0.0/24
+    type = string
+}
+
+
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.subnet_cidr_block
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+subnet_cidr_block = "10.0.40.0/24"
+vpc_cidr_block = "10.0.0.0/16
+
+
+
+LIST TYPE
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {
+    description = "subnet cidr block"
+    type = list(string)
+}
+
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.cidr_block[0]
+    tags = {
+        Name:"development"
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.cidr_block[1]
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:"subnet-1-dev"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+subnet_cidr_block = ["10.0.0.0/16","10.0.40.0/24"]
+vpc_cidr_block = "10.0.0.0/16
+
+
+to run
+
+terraform apply -var-file terraform-dev.tfvars
+
+
+
+
+OBJECTS
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {
+    description = "subnet cidr block"
+    type = list(object({
+        cidr_block = string
+        name = string
+    }))
+}
+
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.cidr_block[0].cidr_block
+    tags = {
+        Name:var.cidr_block[0].name
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.cidr_block[1].cidr_block
+    availability_zon = "eu-west-3a"
+    tags = {
+        Name:var.cidr_block[1].cidr_block
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+
+
+terraform.tfvars
+
+cidr_block = [{cidr_block = "10.0.40.0/24",name = dev-vpc},{cidr_block = "10.0.10.0/24",name="dev-subnet}]
+
+
+
+
+
+ENVIRONMENT VARIABLES
+
+remove the access and secret key from provider
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+}
+
+
+then applying the changes
+
+export AWS_SECRET_ACCESS_KEY=sldfjlsdjflsdjlj
+export AWS_ACCESS_KEY_ID=sldjfldksljdfsl
+
+terraform apply -var-file terraform-dev.tfvars
+
+to see environment variables setted in perticular command line
+
+env | grep AWS
+
+the environment varibles setted like above only available in that perticular command line.cant access from an another command line
+
+default location for storing aws credentials
+
+ls `/.aws/credentials
+
+
+to add to above location run below command(you need aws cli to be installed in order to run above code)
+
+aws configure
+AWS Access Key ID [sldfkjlsdjfl]:
+AWS Secret Access Key [sldkfjlsjdf]:
+Default region name [eu-west-3]:
+
+after storing above variables in aws-cli location locally
+
+terraform apply -var-file terraform-dev.tfvars
+
+
+
+SETTING CUSTOM ENVIRONMENT VARIABLES
+
+export deffault_naming_convention_+_then_name_of_the_variable=value_of_the_variable
+
+export TF_VAR_avail_zone="eu-west-3a"
+
+
+above variables TF_VAR part is for terraform to know it is a global variable.rest of the naming part can be used to refrerence the value of variable
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {
+    description = "subnet cidr block"
+    type = list(object({
+        cidr_block = string
+        name = string
+    }))
+}
+
+variable avail_zone {}
+
+
+
+resource "aws_vpc" "development-vpc" {
+    cidr_block = var.cidr_block[0].cidr_block
+    tags = {
+        Name:var.cidr_block[0].name
+    }
+
+}
+
+resource "aws_subnet" "dev-subnet-1" {
+    vpc_id = aws_vpc.development-vpc.id
+    cidr_block = var.cidr_block[1].cidr_block
+    availability_zon = var.avail_zone
+    tags = {
+        Name:var.cidr_block[1].cidr_block
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+output "dev-vpc-id" {
+    value = aws_vpc.development-vpc.id
+
+}
+
+output "dev-subnet-di" {
+    value = aws_subnet.dev-subnet-1.id
+
+}
+
+then apply the changes
+
+terraform apply -var-file terraform-dev.tfvars
+
+
+
+======
+demo project
+
+======
+
+
+what should be added to gitignore in terraform project
+
+.gitignore
+
+.terraform*
+
+*.tfstate
+*.tfstate.*
+
+*.tfvars
+
+deployment environment prefix
+
+"dev-vpc"
+"staging-vpc"
+"prod-vpc"
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+
+
+run terraform plan to see what terraform is going to execute
+
+terraform plan
+
+
+
+ROUTE TABLE AND INTERNET GATEWAY
+
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+resource "aws_route_table" "myapp-route-table" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-rtb"
+    }
+}
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp.vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+
+
+
+
+then run
+
+terraform plan
+
+to see whats going to happen
+
+
+
+=====
+
+AUTOMATE AWS INFRASTRUCTURE
+=====
+
+---------------
+
+subnet association with route tables
+--------------
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+resource "aws_route_table" "myapp-route-table" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-rtb"
+    }
+}
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_route_table_association" "a-rtb-subnet" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    route_table_id = aws_route_table.myapp-route-table.id
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+
+
+
+
+then run
+
+terraform plan
+
+to see whats going to happen
+
+
+
+-------
+Automate Aws Infrastructure
+
+-------
+
+Use main route table without creating a new route table
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+
+
+
+to see details about specific recourse we created ,we can run
+
+terraform state show aws_vpc.myapp-vpc
+
+
+
+=====
+Security Groups
+=====
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_security_group" "myapp-sg" {
+    name = "myapp-sg"
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-sg"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+====
+Use default security group
+====
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+
+====
+Amazon Machine Image for EC2
+====
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+
+=====
+Create EC2 Instances
+=====
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    key_name = "server-key-pair"
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+TO MOVE DOWNLOADED KEY FAIR TO AWS-CLIE SSH FOLDER
+
+mv `/Downloads/server-key-pair.pem `/.ssh
+
+remove write permission from the above file
+
+chmod 400 `/.ssh/server-key-pair.pem
+
+above restricting step is mandotory.otherwise aws will reject your request to connect.but worked for me..
+
+
+TO CONNECT TO ABOVE CREATED EC2 INSTANCE USING COMMAND LINE
+
+ssh -i `/.ssh/server-key-pair.pem ec2-user@52.47.179.234(EC2_INSTANCE_PUBLIC_ADDRESS)
+
+
+email = chasithDevelopment@gmail.com
+password = OVERBUDGET_FUCKED_SO_NEW_ACCOUNT
+
+
+
+
+====
+CREATE SSH KEY PAIR USING TERRAFORM
+====
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+ssh into the ec2 instance
+
+ssh -i `/.ssh/id_rsa ec2-user@15.237.150.226
+
+
+TO remove ssh key pair
+
+rm .ssh/server-key-pair.pem
+
+
+
+====
+Run entrypoint script to start docker container
+====
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    user_data = <<EOF
+  		    #!/bin/bash
+                    sudo yum update -y && sudo yum install -y docker
+                    sudo systemctl start docker
+                    sudo usermod -aG docker ec2-user
+                    docker run -p 8080:80 nginx
+                EOF
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+====
+Extract to shell script
+
+====
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    user_data = file("entry-script.sh")
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub
+
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+entry-script.sh
+
+
+#!/bin/bash
+sudo yum update -y && sudo yum install -y docker
+sudo systemctl start docker
+sudo usermod -aG docker ec2-user
+docker run -p 8080:80 nginx
+EOF
+
+
+====
+Commit to own feature branch
+====
+
+git checkout -b feature/deploy-to-ec2-default-components
+git add .
+git commit -m "add ec2 deployment configuration"
+git push --set-upstream origin feature/deploy-to-ec2-default-components
+
+
+
+
+
+====
+Configure infrastructure not server
+====
+
+
+====
+provisioneirs part 1
+
+====
+
+====
+provisioneirs part 2
+====
+
+remote-exec provisioner
+local-exec provisioner
+file provisioner
+
+
+
+
+
+
+
+git checkout -b feature/provisioners
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+variable private_key_location {}
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+====
+Provisioners part 3
+====
+
+provisioners are not recommended by terraform
+
+====
+Failed Provisioners
+====
+
+if provisioners failed terraform will mark that perticular recourse which the provisioners was inside failed.so you will have to recreate it again.
+
+
+======
+
+Introduction to modules
+======
+
+====
+Modules part 2
+====
+
+=====
+Modularizing our app
+=====
+
+creating a new branch in git lab so current code wont break and can be refrenced later if wanted
+
+git checkout -b feature/modules
+
+
+Terraform Project Structure
+
+main.tf
+variables.tf
+outputs.tf
+providers.tf
+
+current project code
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = aws_vpc.myapp-vpc.id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+
+
+How we are going to break them
+
+
+outputs.tf
+
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+
+variables.tf
+
+variable "cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+variable private_key_location {}
+
+
+====
+Modules part 2
+====
+
+
+====
+create a module
+====
+
+below are the new folders created inside the terraform project directory
+
+modules
+    subnet
+    webserver
+
+to create files using terminal
+
+cd modules
+cd webserver
+touch main.tf
+touch outputs.tf
+touch variables.tf
+cd ../subnet
+touch main.tf
+touch outputs.tf
+touch variables.tf
+
+current main.tf file
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = aws_subnet.myapp-subnet-1.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+
+then run plan
+
+terraform plan
+
+then apply
+
+terraform apply
+
+
+
+
+
+How we are going to break them
+
+
+outputs.tf
+
+
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image
+}
+
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
+}
+
+
+variables.tf
+
+variable "subnet_cidr_block" {}
+variable "cidr_block" {}
+variable avail_zone {}
+variable env_prefix {}
+variable my_ip {}
+variable instance_type {}
+variable my_pulic_key {}
+variable public_key_location {}
+variable private_key_location {}
+
+
+
+subnet>main.tf
+
+
+
+resource "aws_subnet" "myapp-subnet-1" {
+    vpc_id = var.vpc_id
+    cidr_block = var.subnet_cidr_block
+    availability_zone = var.avail_zone
+    tags = {
+        Name:"${var.env_prefix}-subnet-1"
+        #remove_this#vpc_env:"dev"
+    }
+}
+
+
+
+
+resource "aws_internet_gateway" "myapp-igw" {
+    vpc_id = var.vpc_id
+    tags = {
+        Name: "${var.env_prefix}-igw"
+    }
+}
+
+resource "aws_default_route_table" "main-rtb" {
+    default_route_table_id = var.default_route_table_id
+    
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.myapp-igw.id
+    }
+    tags = {
+        Name: "${var.env_prefix}-main-rtb"
+    }
+}
+
+variables.tf
+variable subnet_cidr_block {}
+variable avail_zone {}
+variable env_prefix {}
+variable vpc_id {}
+variable default_route_table_id {}
+
+
+===
+use the above created module in the main main.tf file
+===
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+module "myapp-subnet" {
+    source = "./modules/subnet"
+    subnet_cidr_block = var.subnet_cider_block
+    avail_zon = var.avail_zone
+    env_prefix = var.env_prefix
+    vpc_id = aws_vpc.myapp-vpc.id
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+}
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+
+
+
+
+====
+Modules - Part 4
+====
+
+====
+Module Output
+====
+
+mudules>subnet
+
+outputs.tf
+
+output "subnet" {
+    value = aws_subnet.myapp-subnet-1
+}
+
+
+main maint.tf
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+module "myapp-subnet" {
+    source = "./modules/subnet"
+    subnet_cidr_block = var.subnet_cider_block
+    avail_zon = var.avail_zone
+    env_prefix = var.env_prefix
+    vpc_id = aws_vpc.myapp-vpc.id
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+}
+
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = aws_vpc.myapp-vpc.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = module.myapp-subnet.subnet.id
+    vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+
+====
+Apply Configuration Changes
+====
+
+to run we have to run
+terraform init
+
+because whenever we change something in the module everything has to be re build
+
+then
+
+terraform apply
+
+====
+Modules Part 5
+====
+
+====
+Create "webserver" Module
+====
+
+modules>webserver
+
+main.tf
+
+
+
+resource "aws_default_security_group" "default-sg" {
+    vpc_id = var.vpc_id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = [var.image_name]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = var.subnet_id
+    vpc_security_group_ids = [aws_default_security_group.default_sg_id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo yum update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+variables.tf
+
+variable vpc_id {}
+variable my_ip {}
+variable env_prefix {}
+variable image_name {}
+variable public_key_location {}
+variable instance_type {}
+variable subnet_id {}
+variable default_sg_id {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+
+importing webser module to the main.tf file
+
+main main.tf file
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+module "myapp-subnet" {
+    source = "./modules/subnet"
+    subnet_cidr_block = var.subnet_cider_block
+    avail_zon = var.avail_zone
+    env_prefix = var.env_prefix
+    vpc_id = aws_vpc.myapp-vpc.id
+    default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+}
+
+module "myapp-server" {
+    source = "./modules/webserver"
+    vpc_id = aws_vpc.myapp-vpc.id
+    source = var.my_ip
+    source = var.env_prefix
+    source = var.image_name
+    source = var.public_key_location
+    source = var.instance_type
+    source = var.avail_zone
+}
+
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+image_name = "amzn2-ami-hvm-*-x86_64-gp2"
+
+
+then run
+ 
+
+terraform init
+
+terraform plan
+
+terraform apply
+
+
+
+if we want to still show the outputs we defined earlier in the course
+
+main.tf>outputs.tf
+
+output "ec2_public_ip" {
+    value = module.myapp-server.instance.public_ip
+}
+
+
+modules>webserver>outputs.tf
+
+output "instance" {
+    value = aws_instance.myapp-server
+}
+
+
+
+====
+Apply Configuration Changes
+====
+
+=====
+Modules Part 6
+=====
+
+====
+Wrap Up - Modularize our terraform project
+====
+
+
+=====
+Modules Part 7
+=====
+
+=====
+Use exisiting Modules from Terraform Registry
+=====
+
+go to terraform modules registry
+
+
+New Folder Structure
+
+main.tf
+variables.tf
+outputs.tf
+modules>
+    webserver
+
+new main.tf
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "my-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+  enable_nat_gateway = true
+  enable_vpn_gateway = true
+
+  tags = {
+    Terraform = "true"
+    Environment = "dev"
+  }
+}
+
+module "myapp-server" {
+    source = "./modules/webserver"
+    vpc_id = aws_vpc.myapp-vpc.id
+    source = var.my_ip
+    source = var.env_prefix
+    source = var.image_name
+    source = var.public_key_location
+    source = var.instance_type
+    source = var.avail_zone
+}
+
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+image_name = "amzn2-ami-hvm-*-x86_64-gp2"
+
+
+after copy pasting above vpc module import cord run
+
+terraform init
+
+it will download the module code for vpc
+which we could edit later
+
+
+====
+Reconfigure it with AWS VPC Module
+====
+
+
+
+
+main.tf
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "my-vpc"
+  cidr = var.vpc_cidr_block
+
+  azs             = [var.avail_zone]
+  public_subnets  = [var.subnet_cidr_block]
+  public_subnet_tags = { Name = "${var.env_prefix}-subnet-1"}
+
+  tags = {
+    Name = "${var.env_prefix}-vpc"
+  }
+}
+
+module "myapp-server" {
+    source = "./modules/webserver"
+    vpc_id = module.vpc.vpc_id
+    my_ip = var.my_ip
+    evn_prefix = var.env_prefix
+    image_name = var.image_name
+    public_key_location = var.public_key_location
+    instance_type = var.instance_type
+    subnet_id = module.vpc.public_subnets[0]
+    avail_zone = var.avail_zone
+}
+
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+image_name = "amzn2-ami-hvm-*-x86_64-gp2"
+
+
+also go to webser>main.tf file and create a new security group simply by removins default by "aws_default_security_group".
+its a best practice to create new security group instead of using default ones.
+
+
+modules>webserver
+
+main.tf
+
+
+
+resource "aws_security_group" "myapp-sg" {
+    vpc_id = var.vpc_id
+    name = "myapp-sg"
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+
+    ingress {
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+        prefix_list_ids = []
+    }
+
+    tags {
+        Name: "${var.env_prefix}-default-sg"
+    }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+    most_recent = true
+    owners = ["amazon"]
+    filter {
+        name = "name"
+        values = [var.image_name]
+    }
+    filter {
+        name = "virtualization-type"
+        values = ["hvm"]
+    }
+}
+
+
+resource "aws_key_pair" "ssh-key" {
+    key_name = "server-key"
+    #public_key = var.my_public_key
+    public_key = file(var.public_key_location)
+
+resource "aws_instance" "myapp-server" {
+    ami = data.aws_ami.latest-amazon-linux-image.id
+    instance_type = var.instance_type
+
+    subnet_id = var.subnet_id
+    vpc_security_group_ids = [aws_ecurity_group.myapp-sg.id]
+    availability_zone = var.avail_zone
+
+    associate_public_ip_address = true
+    #key_name = "server-key-pair"
+    key_name = aws_key_pair.ssh-key.key_name
+
+    #user_data = <<EOF
+  	#	    #!/bin/bash
+         #           sudo um update -y && sudo yum install -y docker
+          #          sudo systemctl start docker
+          #          sudo usermod -aG docker ec2-user
+          #          docker run -p 8080:80 nginx
+          #      EOF
+    #user_data = file("entry-script.sh")
+
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ec2-user"
+        private_key = file(var.private_key_location)
+    }
+
+    provisioner "file" {
+        source = "entry-script.sh"
+        destination = "/home/ec2-user/entry-script-on-ec2.sh"
+    }
+    provisioner "remote-exec" {
+        script = file("entry-script-on-ec2.sh")
+
+        #inline = [
+         #   "export ENV=dev",
+         #   "mkdir newdir"
+         #]
+    
+    }
+
+    provisioner "local-exec" {
+        command = "echo ${self.public_ip} > output.txt"
+    }
+
+    tags = {
+        Name = "${var.env_prefix}-server"
+    }
+}
+
+variables.tf
+
+variable vpc_id {}
+variable my_ip {}
+variable env_prefix {}
+variable image_name {}
+variable public_key_location {}
+variable instance_type {}
+variable subnet_id {}
+variable default_sg_id {}
+variable avail_zone {}
+variable env_prefix {}
+
+
+
+====
+Apply Updated Configuration
+====
+
+delete terraform state
+
+run
+terraform state list 
+
+terraform plan
+
+terraform apply
+
+
+
+create new branch in git to store everything
+
+git checkout -b feature/modules-use-existing
+git status
+git add .
+git commit -m "whatever"
+git push -u origin main
+
+
+
+
+=====
+Remote State
+=====
+
+
+====
+Introduction
+====
+
+
+=====
+Configure Remote Storage
+=====
+
+
+
+
+main.tf
+
+terraform {
+    required_version = ">= 0.12"
+    backend "s3" {
+        bucket = "myapp-bucket"
+        key = "myapp/state/tfstate"
+        region = "eu-west-3"
+}
+
+provider "aws"{
+    region = "eu-west-3"
+    access_key = "dsljfls"
+    secret_key = "sdljfldjlsj"
+}
+
+
+
+resource "aws_vpc" "myapp-vpc" {
+    cidr_block = var.vpc_cidr_block
+    tags = {
+        Name:"${var.env_prefix}-vpc"
+    }
+
+}
+
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "my-vpc"
+  cidr = var.vpc_cidr_block
+
+  azs             = [var.avail_zone]
+  public_subnets  = [var.subnet_cidr_block]
+  public_subnet_tags = { Name = "${var.env_prefix}-subnet-1"}
+
+  tags = {
+    Name = "${var.env_prefix}-vpc"
+  }
+}
+
+module "myapp-server" {
+    source = "./modules/webserver"
+    vpc_id = module.vpc.vpc_id
+    my_ip = var.my_ip
+    evn_prefix = var.env_prefix
+    image_name = var.image_name
+    public_key_location = var.public_key_location
+    instance_type = var.instance_type
+    subnet_id = module.vpc.public_subnets[0]
+    avail_zone = var.avail_zone
+}
+
+
+
+terraform.tfvars
+
+vpc_cidr_block = "10.0.0.0/16"
+subnet_cidr_block = "10.0.10.0/24"
+avail_zone = "eu-west-3b"
+env_prefix = "dev"
+my_ip = "178.191.165.151/32"
+instance_type = "t2.micro"
+my_public_key = "SSH-AAAldkfjlsjdj-ends_with_your_email"
+public_key_location = "Users/nanajanashia/.ssh/id_rsa.pub"
+private_key_location = "Users/nanajanashia/.ssh/id_rsa"
+image_name = "amzn2-ami-hvm-*-x86_64-gp2"
+
+====
+Create aws s3 bucket
+====
+
+====
+Execute Terraform Config with remote backend
+====
+
+everytime we change terraform configuration we have to run terraform init
+
+run
+
+terraform init
+terraform plan
+terraform apply
+
+terraform state list --to see all the states available
+
+
+chasithdevelopment@gmail.com
+password = AWS_FUCKED_ME
